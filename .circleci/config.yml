@@ -1,0 +1,79 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+    - image: python:3.6.8
+    steps:
+      - checkout
+      - restore_cache:
+          key: pip-{{checksum "requirements.txt"}}
+      - run: pip install -r requirements.txt
+      - save_cache:
+          key: pip-{{checksum "requirements.txt"}}
+          paths:
+            - ~/.cache/pip
+  deploy-production:
+    machine:
+      enabled: true
+    steps:
+      - checkout
+      - run:
+          name: Deploy Over SSH
+          command: |
+            ssh circleci@123.31.32.150  "ssh namtq@103.126.156.120 \"ls -lah\""
+workflows:
+  version: 2
+  feature-development:
+    jobs:
+      - build
+      - deploy-production:
+          requires:
+            - build
+  #     # - deploy-feature:
+  #     #     requires:
+  #     #       - build-image
+  #     #     filters:
+  #     #       branches:
+  #     #         only:
+  #     #           - /feature\/.*/
+  #     - deploy-staging:
+  #         requires:
+  #           - build-image
+  #         filters:
+  #           branches:
+  #             only:
+  #               - master
+  # deploy-production:
+  #   jobs:
+  #     - test:
+  #         filters:
+  #           tags:
+  #             only: /^v.*/
+  #           branches:
+  #             ignore: /.*/
+  #     - build-image:
+  #         requires:
+  #           - test
+  #         filters:
+  #           tags:
+  #             only: /^v.*/
+  #           branches:
+  #             ignore: /.*/
+  #     - deploy?:
+  #         type: approval
+  #         requires:
+  #           - build-image
+  #         filters:
+  #           tags:
+  #             only: /^v.*/
+  #           branches:
+  #             ignore: /.*/
+  #     - deploy-production:
+  #         requires:
+  #           - deploy?
+  #         context: k8s-prod
+  #         filters:
+  #           tags:
+  #             only: /^v.*/
+  #           branches:
+  #             ignore: /.*/
